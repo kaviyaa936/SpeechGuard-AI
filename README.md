@@ -119,6 +119,31 @@ SpeechGuard-AI/
 * CSV-based analysis pipeline
 
 ## Output
+## Demo
+
+SpeechGuard AI analyzes ideal and flawed speech and provides:
+
+* Temporal flaw detection with exact time ranges
+* Severity classification
+* Feature-based causal explanations
+* Rubric-based speech score
+* Transcript-based flaw grounding
+* Interactive Streamlit dashboard
+* Downloadable analysis results
+
+### Example Analysis
+
+The system compares ideal and flawed speech, detects deviations over time, identifies important flaw regions, and explains the dominant acoustic feature responsible for each detected flaw.
+
+Example output:
+
+* Overall Score: 40/100
+* Rating: Poor
+* Detected Flaws: 9
+* High Severity: 5
+* Medium Severity: 4
+* Low Severity: 0
+
 
 The system generates:
 
