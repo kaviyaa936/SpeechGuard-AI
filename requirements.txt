@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+librosa
+soundfile
+av
