@@ -1,195 +1,338 @@
 import pandas as pd
+import numpy as np
 import os
 
 
 def generate_causal_explanations(
-    features_file,
-    flaws_file,
+    flaw_file,
+    comparison_file,
     output_file,
     flawed_duration
 ):
 
-    # Load feature comparison data
-    features = pd.read_csv(features_file)
+    flaws = pd.read_csv(
+        flaw_file
+    )
 
-    # Load detected flaw regions
-    flaws = pd.read_csv(flaws_file)
+    comparison = pd.read_csv(
+        comparison_file
+    )
 
-    explanations = []
+    # =================================================
+    # FEATURES
+    # =================================================
 
-    # Features used for causal analysis
-    feature_columns = {
-        "Energy": "energy_difference",
-        "Zero Crossing Rate": "zcr_difference",
-        "Spectral Centroid": "spectral_centroid_difference",
-        "Pitch": "pitch_f0_difference",
-        "MFCC 1": "mfcc_1_difference",
-        "MFCC 2": "mfcc_2_difference",
-        "MFCC 3": "mfcc_3_difference",
-        "MFCC 4": "mfcc_4_difference",
-        "MFCC 5": "mfcc_5_difference",
-        "MFCC 6": "mfcc_6_difference",
-        "MFCC 7": "mfcc_7_difference",
-        "MFCC 8": "mfcc_8_difference",
-        "MFCC 9": "mfcc_9_difference",
-        "MFCC 10": "mfcc_10_difference",
-        "MFCC 11": "mfcc_11_difference",
-        "MFCC 12": "mfcc_12_difference",
-        "MFCC 13": "mfcc_13_difference"
-    }
+    feature_columns = [
+        "energy",
+        "zcr",
+        "spectral_centroid",
+        "dominant_frequency",
+        "pitch_f0"
+    ]
 
-    for index, row in flaws.iterrows():
+    for i in range(1, 14):
 
-        start_time = row["start_time"]
-        end_time = row["end_time"]
-        peak = row["max_deviation"]
-
-        # Convert time range into progress range
-        start_progress = start_time / flawed_duration
-        end_progress = end_time / flawed_duration
-
-        # Find corresponding feature rows
-        region = features[
-            (features["progress"] >= start_progress) &
-            (features["progress"] <= end_progress)
-        ]
-
-        # Find dominant feature
-        feature_scores = {}
-
-        for feature_name, column_name in feature_columns.items():
-
-            if len(region) > 0:
-
-                feature_scores[feature_name] = (
-                    region[column_name]
-                    .abs()
-                    .mean()
-                )
-
-            else:
-
-                feature_scores[feature_name] = 0
-
-        dominant_feature = max(
-            feature_scores,
-            key=feature_scores.get
+        feature_columns.append(
+            f"mfcc_{i}"
         )
 
-        dominant_value = feature_scores[
-            dominant_feature
+    # =================================================
+    # FEATURE DESCRIPTIONS
+    # =================================================
+
+    feature_causes = {
+
+        "energy":
+            "The energy changed significantly, indicating a change in speech intensity or loudness.",
+
+        "zcr":
+            "The zero-crossing rate changed significantly, indicating a change in signal activity or articulation characteristics.",
+
+        "spectral_centroid":
+            "The spectral centroid changed significantly, indicating a change in the frequency distribution of the speech signal.",
+
+        "dominant_frequency":
+            "The dominant frequency changed significantly, indicating a change in the strongest frequency component of the speech signal.",
+
+        "pitch_f0":
+            "The pitch changed significantly, indicating a variation in the perceived highness or lowness of the voice."
+    }
+
+    feature_feedback = {
+
+        "energy":
+            "Maintain a more consistent speaking intensity.",
+
+        "zcr":
+            "Maintain clearer and more stable articulation.",
+
+        "spectral_centroid":
+            "Maintain a more consistent vocal tone and articulation.",
+
+        "dominant_frequency":
+            "Maintain a more stable frequency pattern and vocal delivery.",
+
+        "pitch_f0":
+            "Maintain a more consistent pitch and avoid sudden pitch changes."
+    }
+
+    # =================================================
+    # RESULT LIST
+    # =================================================
+
+    results = []
+
+    # =================================================
+    # PROCESS EACH FLAW
+    # =================================================
+
+    for _, flaw in flaws.iterrows():
+
+        flaw_id = flaw["region_id"]
+
+        start_time = float(
+            flaw["start_time"]
+        )
+
+        end_time = float(
+            flaw["end_time"]
+        )
+
+        severity = flaw[
+            "severity"
         ]
 
-        # Determine severity
-        if peak > 400:
-            severity = "High"
+        # ---------------------------------------------
+        # Convert actual time to normalized progress
+        # ---------------------------------------------
 
-        elif peak > 300:
-            severity = "Medium"
+        start_progress = (
+            start_time
+            / flawed_duration
+        )
+
+        end_progress = (
+            end_time
+            / flawed_duration
+        )
+
+        # ---------------------------------------------
+        # Select comparison region
+        # ---------------------------------------------
+
+        region = comparison[
+            (
+                comparison["progress"]
+                >= start_progress
+            )
+            &
+            (
+                comparison["progress"]
+                <= end_progress
+            )
+        ]
+
+        # Fallback if region is empty
+        if region.empty:
+
+            region = comparison.iloc[
+                [
+                    (
+                        comparison[
+                            "progress"
+                        ]
+                        - start_progress
+                    ).abs().idxmin()
+                ]
+            ]
+
+        # =================================================
+        # FEATURE DIFFERENCE
+        # =================================================
+
+        feature_scores = {}
+
+        for feature in feature_columns:
+
+            column = (
+                f"{feature}_difference"
+            )
+
+            if column in region.columns:
+
+                value = np.mean(
+                    np.abs(
+                        region[column]
+                    )
+                )
+
+                feature_scores[
+                    feature
+                ] = value
+
+        # =================================================
+        # DOMINANT FEATURE
+        # =================================================
+
+        if feature_scores:
+
+            dominant_feature = max(
+                feature_scores,
+                key=feature_scores.get
+            )
+
+            dominant_value = (
+                feature_scores[
+                    dominant_feature
+                ]
+            )
 
         else:
-            severity = "Low"
 
-        # Feature-specific explanation
-        if dominant_feature == "Energy":
+            dominant_feature = "Unknown"
 
-            cause = (
-                "The speech energy level changed significantly "
-                "compared with the ideal speech."
-            )
+            dominant_value = 0.0
 
-        elif dominant_feature == "Zero Crossing Rate":
+        # =================================================
+        # PEAK DEVIATION
+        # =================================================
 
-            cause = (
-                "The Zero Crossing Rate changed significantly, "
-                "indicating a change in speech sound characteristics."
-            )
+        peak = region[
+            "overall_deviation"
+        ].max()
 
-        elif dominant_feature == "Spectral Centroid":
+        # =================================================
+        # FEATURE CAUSE
+        # =================================================
 
-            cause = (
-                "The spectral characteristics of the speech changed "
-                "significantly compared with the ideal speech."
-            )
+        cause = feature_causes.get(
+            dominant_feature,
+            "The dominant acoustic feature changed significantly from the ideal reference."
+        )
 
-        elif dominant_feature == "Pitch":
+        feedback = feature_feedback.get(
+            dominant_feature,
+            "Try to maintain a more consistent speech pattern."
+        )
 
-            cause = (
-                "The speaker's pitch pattern changed significantly "
-                "compared with the ideal speech."
-            )
+        # =================================================
+        # MATHEMATICAL RATIONALE
+        # =================================================
 
-        else:
+        mathematical_rationale = (
 
-            cause = (
-                f"{dominant_feature} changed significantly, "
-                "indicating a difference in the acoustic speech pattern."
-            )
+            "The system compares the absolute feature "
+            "difference between the ideal and flawed "
+            "speech over this time region. "
+
+            f"The average difference for "
+            f"{dominant_feature} was "
+            f"{dominant_value:.2f}, while the peak "
+            f"overall deviation was "
+            f"{peak:.2f}. "
+
+            "A larger deviation indicates a stronger "
+            "departure from the ideal reference."
+        )
+
+        # =================================================
+        # EXPLANATION
+        # =================================================
 
         explanation = (
-            f"Speech flaw detected from "
-            f"{start_time:.2f} seconds to "
-            f"{end_time:.2f} seconds. "
 
-            f"The dominant acoustic change was "
-            f"{dominant_feature} with an average difference of "
+            f"Speech flaw detected from "
+            f"{start_time:.2f}s to "
+            f"{end_time:.2f}s. "
+
+            f"Dominant acoustic feature: "
+            f"{dominant_feature}. "
+
+            f"Average feature difference: "
             f"{dominant_value:.2f}. "
 
             f"{cause} "
 
-            f"Peak deviation: {peak:.2f}. "
+            f"{mathematical_rationale} "
 
-            f"Severity: {severity}."
+            f"Severity: {severity}. "
+
+            f"Actionable feedback: "
+            f"{feedback}"
         )
 
-        explanations.append({
+        # =================================================
+        # STORE RESULT
+        # =================================================
 
-            "flaw_id": index + 1,
+        results.append({
 
-            "start_time": start_time,
+            "flaw_id":
+                flaw_id,
 
-            "end_time": end_time,
+            "start_time":
+                start_time,
 
-            "dominant_feature": dominant_feature,
+            "end_time":
+                end_time,
 
-            "feature_difference": dominant_value,
+            "dominant_feature":
+                dominant_feature,
 
-            "peak_deviation": peak,
+            "feature_difference":
+                dominant_value,
 
-            "severity": severity,
+            "peak_deviation":
+                peak,
 
-            "explanation": explanation
+            "severity":
+                severity,
+
+            "mathematical_rationale":
+                mathematical_rationale,
+
+            "feedback":
+                feedback,
+
+            "explanation":
+                explanation
         })
 
-    # Create result table
-    result = pd.DataFrame(
-        explanations
+    # =================================================
+    # SAVE RESULTS
+    # =================================================
+
+    result_df = pd.DataFrame(
+        results
     )
 
-    # Ensure results folder exists
     output_folder = os.path.dirname(
         output_file
     )
 
     if output_folder:
+
         os.makedirs(
             output_folder,
             exist_ok=True
         )
 
-    # Save causal explanations
-    result.to_csv(
+    result_df.to_csv(
         output_file,
         index=False
     )
 
     print(
-        "Feature-specific causal explanation completed!"
+        "Causal explanation generation successful!"
     )
 
     print(
         "Number of explanations:",
-        len(result)
+        len(result_df)
+    )
+
+    print(
+        "Dominant frequency analysis included!"
     )
 
     print(
@@ -197,18 +340,22 @@ def generate_causal_explanations(
         output_file
     )
 
-    return result
+    return result_df
 
 
 # ==================================================
-# TEST WITH EXISTING SAMPLE
+# TEST
 # ==================================================
 
 if __name__ == "__main__":
 
     generate_causal_explanations(
-        "results/feature_comparison.csv",
+
         "results/detected_flaws.csv",
+
+        "results/feature_comparison.csv",
+
         "results/causal_explanations.csv",
+
         16.0
     )

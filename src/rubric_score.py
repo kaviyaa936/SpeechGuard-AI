@@ -12,19 +12,29 @@ def calculate_rubric_score(
         flaws_file
     )
 
-    # Count severity levels
-    high_count = (
-        flaws["max_deviation"] > 400
-    ).sum()
+    # If no flaws were detected
+    if flaws.empty:
 
-    medium_count = (
-        (flaws["max_deviation"] > 300) &
-        (flaws["max_deviation"] <= 400)
-    ).sum()
+        high_count = 0
+        medium_count = 0
+        low_count = 0
 
-    low_count = (
-        flaws["max_deviation"] <= 300
-    ).sum()
+    else:
+
+        # Use severity already calculated
+        # by flaw_detection.py
+
+        high_count = (
+            flaws["severity"] == "High"
+        ).sum()
+
+        medium_count = (
+            flaws["severity"] == "Medium"
+        ).sum()
+
+        low_count = (
+            flaws["severity"] == "Low"
+        ).sum()
 
     # Total number of flaws
     total_flaws = len(flaws)
@@ -44,15 +54,19 @@ def calculate_rubric_score(
 
     # Overall rating
     if score >= 85:
+
         rating = "Excellent"
 
     elif score >= 70:
+
         rating = "Good"
 
     elif score >= 50:
+
         rating = "Needs Improvement"
 
     else:
+
         rating = "Poor"
 
     # Create result
@@ -69,6 +83,7 @@ def calculate_rubric_score(
         "medium_severity_flaws": medium_count,
 
         "low_severity_flaws": low_count
+
     }])
 
     # Create output folder
@@ -77,6 +92,7 @@ def calculate_rubric_score(
     )
 
     if output_folder:
+
         os.makedirs(
             output_folder,
             exist_ok=True
@@ -88,6 +104,7 @@ def calculate_rubric_score(
         index=False
     )
 
+    # Print summary
     print(
         "Rubric score generation successful!"
     )

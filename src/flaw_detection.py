@@ -12,30 +12,43 @@ def detect_flaws(input_file, output_file, flawed_duration):
     mean_deviation = np.mean(deviation)
     std_deviation = np.std(deviation)
 
+    # Detection threshold
     threshold = mean_deviation + 1.5 * std_deviation
 
     is_flaw = deviation > threshold
 
+    # =========================================================
+    # FIND FLAW REGIONS
+    # =========================================================
+
     regions = []
+
     start = None
 
     for i, value in enumerate(is_flaw):
 
         if value and start is None:
+
             start = i
 
         elif not value and start is not None:
-            regions.append((start, i - 1))
+
+            regions.append(
+                (start, i - 1)
+            )
+
             start = None
 
     if start is not None:
+
         regions.append(
             (start, len(is_flaw) - 1)
         )
 
-    # -----------------------------
-    # Merge nearby flaw regions
-    # -----------------------------
+
+    # =========================================================
+    # MERGE NEARBY REGIONS
+    # =========================================================
 
     MERGE_GAP = 10
 
@@ -44,24 +57,35 @@ def detect_flaws(input_file, output_file, flawed_duration):
     for region in regions:
 
         if not merged_regions:
-            merged_regions.append(list(region))
-            continue
 
-        previous = merged_regions[-1]
-
-        gap = region[0] - previous[1] - 1
-
-        if gap <= MERGE_GAP:
-            previous[1] = region[1]
-
-        else:
             merged_regions.append(
                 list(region)
             )
 
-    # -----------------------------
-    # Remove very tiny regions
-    # -----------------------------
+            continue
+
+        previous = merged_regions[-1]
+
+        gap = (
+            region[0]
+            - previous[1]
+            - 1
+        )
+
+        if gap <= MERGE_GAP:
+
+            previous[1] = region[1]
+
+        else:
+
+            merged_regions.append(
+                list(region)
+            )
+
+
+    # =========================================================
+    # REMOVE VERY SMALL REGIONS
+    # =========================================================
 
     MIN_REGION_LENGTH = 5
 
@@ -72,13 +96,15 @@ def detect_flaws(input_file, output_file, flawed_duration):
         length = end - start + 1
 
         if length >= MIN_REGION_LENGTH:
+
             final_regions.append(
                 (start, end)
             )
 
-    # -----------------------------
-    # Create flaw results
-    # -----------------------------
+
+    # =========================================================
+    # CREATE RESULTS
+    # =========================================================
 
     results = []
 
@@ -101,7 +127,49 @@ def detect_flaws(input_file, output_file, flawed_duration):
             * flawed_duration
         )
 
-        duration = end_time - start_time
+        duration = (
+            end_time - start_time
+        )
+
+        max_deviation = np.max(
+            region_deviation
+        )
+
+        mean_region_deviation = np.mean(
+            region_deviation
+        )
+
+
+        # =====================================================
+        # RELATIVE SEVERITY
+        # =====================================================
+
+        # Calculate how far the region is above
+        # the detection threshold.
+
+        if threshold > 0:
+
+            severity_ratio = (
+                max_deviation / threshold
+            )
+
+        else:
+
+            severity_ratio = 0
+
+
+        if severity_ratio >= 1.50:
+
+            severity = "High"
+
+        elif severity_ratio >= 1.20:
+
+            severity = "Medium"
+
+        else:
+
+            severity = "Low"
+
 
         results.append({
 
@@ -117,28 +185,35 @@ def detect_flaws(input_file, output_file, flawed_duration):
 
             "duration": duration,
 
-            "duration_points": end - start + 1,
-
-            "max_deviation": np.max(
-                region_deviation
+            "duration_points": (
+                end - start + 1
             ),
 
-            "mean_deviation": np.mean(
-                region_deviation
-            )
+            "max_deviation": max_deviation,
+
+            "mean_deviation": (
+                mean_region_deviation
+            ),
+
+            "severity": severity
+
         })
 
-    result_df = pd.DataFrame(results)
 
-    # -----------------------------
-    # Save result
-    # -----------------------------
+    # =========================================================
+    # SAVE RESULTS
+    # =========================================================
+
+    result_df = pd.DataFrame(
+        results
+    )
 
     output_folder = os.path.dirname(
         output_file
     )
 
     if output_folder:
+
         os.makedirs(
             output_folder,
             exist_ok=True
@@ -149,55 +224,49 @@ def detect_flaws(input_file, output_file, flawed_duration):
         index=False
     )
 
-    # -----------------------------
-    # Print summary
-    # -----------------------------
+
+    # =========================================================
+    # PRINT SUMMARY
+    # =========================================================
 
     print(
-        "Temporal flaw detection completed!"
+        "Temporal flaw detection successful!"
     )
 
     print(
-        f"Flawed speech duration: "
-        f"{flawed_duration:.2f} seconds"
+        f"Mean deviation: {mean_deviation:.4f}"
     )
 
     print(
-        f"Mean deviation: "
-        f"{mean_deviation:.4f}"
+        f"Detection threshold: {threshold:.4f}"
     )
 
     print(
-        f"Detection threshold: "
-        f"{threshold:.4f}"
+        f"Number of flaw regions: {len(result_df)}"
     )
 
-    print(
-        f"Initial flaw regions: "
-        f"{len(regions)}"
-    )
+    if not result_df.empty:
+
+        print(
+            "\nSeverity distribution:"
+        )
+
+        print(
+            result_df[
+                "severity"
+            ].value_counts()
+        )
 
     print(
-        f"After merging: "
-        f"{len(merged_regions)}"
-    )
-
-    print(
-        f"Final meaningful flaw regions: "
-        f"{len(final_regions)}"
-    )
-
-    print(
-        f"Saved to: "
-        f"{output_file}"
+        f"Saved to: {output_file}"
     )
 
     return result_df
 
 
-# ==================================================
-# TEST WITH EXISTING SAMPLE
-# ==================================================
+# =========================================================
+# TEST
+# =========================================================
 
 if __name__ == "__main__":
 
