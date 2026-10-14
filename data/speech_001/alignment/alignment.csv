@@ -1,0 +1,8 @@
+```csv
+audio_id,transcript_id,type,flaw_type,start_time,end_time,severity
+flawed_001,transcript_001,flawed,acoustic_deviation,0.993988,1.410822,Medium
+flawed_001,transcript_001,flawed,acoustic_deviation,3.334669,3.687375,Medium
+flawed_001,transcript_001,flawed,acoustic_deviation,7.791583,8.432866,Medium
+flawed_001,transcript_001,flawed,acoustic_deviation,9.234469,10.004008,Medium
+flawed_001,transcript_001,flawed,acoustic_deviation,10.549098,10.837675,Low
+```
