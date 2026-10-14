@@ -4,67 +4,72 @@
 
 SpeechGuard AI is an AI-powered speech analysis system that compares ideal and flawed speech recordings to detect temporal speech flaws and explain their possible acoustic causes.
 
-## Problem
+## Problem Statement
 
-Traditional speech analysis often provides only an overall score. It does not clearly show:
+Traditional speech analysis systems often provide only an overall score without clearly explaining where and why speech flaws occur.
 
-* When a speech flaw occurred
-* How long the flaw lasted
-* What acoustic feature changed
-* How severe the flaw was
-* Which part of the transcript was affected
+They may not clearly identify:
+
+- When a speech flaw occurred
+- How long the flaw lasted
+- Which acoustic feature changed
+- How severe the flaw was
+- Which part of the transcript was affected
 
 SpeechGuard AI addresses these limitations through temporal and feature-level speech analysis.
 
 ## Key Features
 
-* Ideal vs flawed speech comparison
-* Audio feature extraction
-* Temporal flaw detection
-* Exact time-range grounding
-* Feature-specific causal explanations
-* Severity classification
-* Speech quality score
-* Transcript grounding
-* Interactive Streamlit dashboard
-* CSV result downloads
+- Ideal vs. flawed speech comparison
+- Audio feature extraction
+- Temporal flaw detection
+- Time-range grounding of detected flaws
+- Feature-based causal explanations
+- Severity classification
+- Rubric-based speech quality scoring
+- Transcript-based flaw grounding
+- Interactive Streamlit dashboard
+- Downloadable CSV analysis results
 
 ## Audio Features
 
-The system extracts:
+The system extracts and compares the following acoustic features:
 
-* Energy
-* Zero Crossing Rate (ZCR)
-* Spectral Centroid
-* Pitch / F0
-* 13 MFCC features
+- Energy
+- Zero Crossing Rate (ZCR)
+- Spectral Centroid
+- Pitch / Fundamental Frequency (F0)
+- 13 Mel-Frequency Cepstral Coefficients (MFCCs)
+
+These features help identify acoustic differences between ideal and flawed speech.
 
 ## System Pipeline
 
 ```text
-Ideal Speech
-     |
-     v
-Feature Extraction
-     |
-     +----------------------+
-                            |
-                            v
-                    Feature Comparison
-                            |
-Flawed Speech               v
-     |              Temporal Flaw Detection
-     |                       |
-     +-----------------------+
-                             |
-                             v
-                  Causal Explanation
-                             |
-                             v
-                     Rubric Scoring
-                             |
-                             v
-                   Streamlit Dashboard
+Ideal Speech                 Flawed Speech
+     |                            |
+     v                            v
+Feature Extraction          Feature Extraction
+     |                            |
+     +-------------+--------------+
+                   |
+                   v
+           Feature Comparison
+                   |
+                   v
+         Temporal Flaw Detection
+                   |
+                   v
+          Causal Explanation
+                   |
+                   v
+             Rubric Scoring
+                   |
+                   v
+          Streamlit Dashboard
+                   |
+                   v
+           CSV Result Downloads
 ```
 
 ## Project Structure
@@ -102,85 +107,108 @@ SpeechGuard-AI/
 │   └── rubric_score.csv
 │
 ├── docs/
-│
 ├── models/
-│
+├── requirements.txt
 └── README.md
 ```
 
 ## Technology Stack
 
-* Python
-* Pandas
-* NumPy
-* Librosa
-* Streamlit
-* PyAV
-* CSV-based analysis pipeline
+- **Programming Language:** Python
+- **Data Processing:** Pandas, NumPy
+- **Audio Processing:** SoundFile, PyAV
+- **Acoustic Analysis:** Audio feature extraction and comparison
+- **Web Application:** Streamlit
+- **Results:** CSV-based analysis pipeline
 
-## Output
-## Demo
+## Output and Demo
 
-SpeechGuard AI analyzes ideal and flawed speech and provides:
+SpeechGuard AI analyzes ideal and flawed speech recordings and presents the results through an interactive Streamlit dashboard.
 
-* Temporal flaw detection with exact time ranges
-* Severity classification
-* Feature-based causal explanations
-* Rubric-based speech score
-* Transcript-based flaw grounding
-* Interactive Streamlit dashboard
-* Downloadable analysis results
+The system provides:
+
+- Detected flaw regions with start and end timestamps
+- Flaw duration
+- Acoustic feature deviations
+- Severity levels
+- Feature-based causal explanations
+- Rubric-based speech quality score
+- Transcript-based flaw grounding
+- Downloadable analysis results
 
 ### Example Analysis
 
-The system compares ideal and flawed speech, detects deviations over time, identifies important flaw regions, and explains the dominant acoustic feature responsible for each detected flaw.
+For the current example analysis, the system produced the following results:
 
-Example output:
+- **Overall Score:** 78/100
+- **Rating:** Good
+- **Detected Flaws:** 5
+- **High Severity:** 0
+- **Medium Severity:** 4
+- **Low Severity:** 1
 
-* Overall Score: 40/100
-* Rating: Poor
-* Detected Flaws: 9
-* High Severity: 5
-* Medium Severity: 4
-* Low Severity: 0
+These values represent the current example run and may change when different recordings or analysis settings are used.
 
+The generated results include temporal flaw regions, timestamps, duration, dominant acoustic features, feature deviations, severity levels, and causal explanations.
 
-The system generates:
+## Installation and Setup
 
-* Temporal flaw regions
-* Start and end timestamps
-* Flaw duration
-* Dominant acoustic feature
-* Feature deviation
-* Severity level
-* Causal explanation
-* Speech quality score
+### Prerequisites
 
-## Running the Application
+- Python installed on the system
+- Git
+- A compatible web browser
 
-Activate the virtual environment and run:
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/kaviyaa936/SpeechGuard-AI.git
+cd SpeechGuard-AI
+```
+
+### 2. Create a Virtual Environment
+
+```bash
+python -m venv .venv
+```
+
+### 3. Activate the Virtual Environment
+
+**Windows:**
+
+```bash
+.venv\Scripts\activate
+```
+
+### 4. Install Dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 5. Run the Application
 
 ```bash
 streamlit run app.py
 ```
 
-Then open the Streamlit URL shown in the terminal.
+Open the local URL displayed in the terminal to access the Streamlit dashboard.
 
-## Important Note
+## Important Note on Transcript Grounding
 
-For plain text transcripts without timestamps, transcript grounding is performed at the paragraph/segment level using the detected flaw position.
+For plain-text transcripts without timestamps, transcript grounding is performed at the paragraph or segment level using the detected flaw position.
 
-Exact word-level grounding requires a timestamped transcript or forced alignment system.
+Exact word-level grounding requires a timestamped transcript or a forced-alignment system. Word-level alignment should not be assumed when timestamp information is unavailable.
 
 ## Future Improvements
 
-* Automatic speech recognition
-* Word-level timestamp alignment
-* Automatic pronunciation error classification
-* Real-time speech analysis
-* Advanced AI-based causal reasoning
-* Improved acoustic anomaly detection
-* Speaker-independent evaluation
+- Automatic speech recognition
+- Word-level timestamp alignment
+- Automatic pronunciation error classification
+- Real-time speech analysis
+- Advanced AI-based causal reasoning
+- Improved acoustic anomaly detection
+- Speaker-independent evaluation
 
 ## Project Goal
 

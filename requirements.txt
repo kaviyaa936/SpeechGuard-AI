@@ -3,3 +3,4 @@ pandas
 numpy
 soundfile
 av
+librosa
