@@ -9,7 +9,6 @@ SpeechGuard AI is an AI-powered speech analysis system that compares ideal and f
 Traditional speech analysis systems often provide only an overall score without clearly explaining where and why speech flaws occur.
 
 They may not clearly identify:
-
 - When a speech flaw occurred
 - How long the flaw lasted
 - Which acoustic feature changed
@@ -38,6 +37,7 @@ The system extracts and compares the following acoustic features:
 - Energy
 - Zero Crossing Rate (ZCR)
 - Spectral Centroid
+- Dominant Frequency
 - Pitch / Fundamental Frequency (F0)
 - 13 Mel-Frequency Cepstral Coefficients (MFCCs)
 
@@ -76,18 +76,14 @@ Feature Extraction          Feature Extraction
 
 ```text
 SpeechGuard-AI/
-│
 ├── app.py
-│
 ├── data/
 │   └── speech_001/
 │       ├── ideal/
 │       ├── flawed/
 │       ├── transcript/
 │       └── alignment/
-│
 ├── audio/
-│
 ├── src/
 │   ├── __init__.py
 │   ├── feature_extraction.py
@@ -95,7 +91,6 @@ SpeechGuard-AI/
 │   ├── flaw_detection.py
 │   ├── causal_explanation.py
 │   └── rubric_score.py
-│
 ├── results/
 │   ├── ideal_001_features.csv
 │   ├── flawed_001_features.csv
@@ -105,7 +100,6 @@ SpeechGuard-AI/
 │   ├── detected_flaws.csv
 │   ├── causal_explanations.csv
 │   └── rubric_score.csv
-│
 ├── docs/
 ├── models/
 ├── requirements.txt
@@ -117,7 +111,7 @@ SpeechGuard-AI/
 - **Programming Language:** Python
 - **Data Processing:** Pandas, NumPy
 - **Audio Processing:** SoundFile, PyAV
-- **Acoustic Analysis:** Audio feature extraction and comparison
+- **Acoustic Analysis:** Feature extraction and comparison
 - **Web Application:** Streamlit
 - **Results:** CSV-based analysis pipeline
 
@@ -126,7 +120,6 @@ SpeechGuard-AI/
 SpeechGuard AI analyzes ideal and flawed speech recordings and presents the results through an interactive Streamlit dashboard.
 
 The system provides:
-
 - Detected flaw regions with start and end timestamps
 - Flaw duration
 - Acoustic feature deviations
@@ -155,7 +148,7 @@ The generated results include temporal flaw regions, timestamps, duration, domin
 
 ### Prerequisites
 
-- Python installed on the system
+- Python
 - Git
 - A compatible web browser
 
